@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <link rel="shortcut icon" type="image/x-icon" href="">
+      <link rel="stylesheet" href="style.css">
+      <meta charset="utf-8" />
+      <title>wHOiS</title>
+      <script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+    </head>
+    <body>
+      <form id="form">
+        <input type="text" class="input" placeholder="(+)phone" id="phone"><div class="btn" onclick="phone()">detect</div><br>
+        <input type="text" class="input" placeholder="ip"  id="ip"><div class="btn" onclick="ip()">detect</div><br>
+        <input type="text" class="input" placeholder="domen"  id="domen"><div class="btn" onclick="domen()">detect</div><br>
+      </form>
+      <p id="text"></p> 
+  </body>
+  <script type="text/javascript">
+    function phone(){
+      var phone = document.getElementById('phone').value;
+      location.href = 'https://htmlweb.ru/geo/api.php?telcod=' + phone;
+    }
+    function ip(){
+      var ip = document.getElementById('ip').value;
+      window.open('https://ipinfo.io/' + ip + '/json');
+      location.href = 'https://ipinfo.io/' + ip;
+    }
+    function domen(){
+      var domen = document.getElementById('domen').value;
+      location.href = 'https://htmlweb.ru/analiz/whois_domain.php?ip=' + domen;
+    }
+  </script>
+</html>
