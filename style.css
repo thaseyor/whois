@@ -3,11 +3,7 @@ body{
 	padding:0;
 }
 .input{
-	height: 30px;
-	margin-top: 10px;
-	padding-left:4px; 
-	margin-left: 5px;
-	width: 200px;
+	margin-bottom: 10px;
 }
 .btn{
 	display: inline-block;
@@ -17,4 +13,19 @@ body{
 	border-width: .1px;
 	padding: 4px;
 	cursor: pointer;
+}
+.center {
+    margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  }
+.flex{
+	display: inline-flex;
+}
+.textarea{
+	z-index: -1;
+	height: 100%;
 }
