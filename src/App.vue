@@ -9,14 +9,54 @@
       <b-tabs position="is-centered" class="block">
         <b-tab-item label="Domain"
           ><b-field>
-            <b-input @keydown.enter="loadDomainInfo" v-model="domain"></b-input
-            ><b-button label="Search" @click="loadDomainInfo"
-          /></b-field>
+            <b-input
+              @keydown.enter.native="loadDomainInfo"
+              v-model="domain"
+              expanded
+            ></b-input>
+            <p class="control">
+              <b-button
+                type="is-primary"
+                label="Search"
+                @click="loadDomainInfo"
+              /></p
+          ></b-field>
           <div>
-            <b-message v-for="item in domains" :key="item.name">
-              <h2>{{ item.title }}</h2>
-              {{ item.message }}
-            </b-message>
+            <b-collapse
+              v-for="item in domains"
+              :key="item.title"
+              class="card"
+              animation="slide"
+              aria-id="contentIdForA11y3"
+              v-model="item.isActive"
+            >
+              <template #trigger="props">
+                <div
+                  class="card-header"
+                  role="button"
+                  aria-controls="contentIdForA11y3"
+                >
+                  <p class="card-header-title">
+                    {{ item.title }}
+                  </p>
+                  <a class="card-header-icon">
+                    <b-icon :icon="props.open ? 'menu-down' : 'menu-up'">
+                    </b-icon>
+                    <b-icon
+                      icon="delete"
+                      @click.stop.native="deleteDomain(item.title)"
+                    >
+                    </b-icon>
+                  </a>
+                </div>
+              </template>
+
+              <div class="card-content">
+                <div class="content">
+                  <pre>{{ item.message }}</pre>
+                </div>
+              </div>
+            </b-collapse>
           </div></b-tab-item
         >
         <b-tab-item label="IP"></b-tab-item>
@@ -37,6 +77,12 @@ export default {
       domains: [],
     };
   },
+  created() {
+    const domains = localStorage.getItem("domains-list");
+    if (domains) {
+      this.domains = JSON.parse(domains);
+    }
+  },
   methods: {
     async loadDomainInfo() {
       if (this.domains.filter((d) => d.title === this.domain).length) {
@@ -54,14 +100,16 @@ export default {
       const jsonData = await data.json();
       console.log(jsonData);
       this.isLoading = false;
-      this.domains.push({
-        title: this.domain,
-        message: `
-        Nameserver 1: ${jsonData["WhoisRecord"]["registryData"]["nameServers"]["hostNames"][0]}
-        \n
-        Nameserver 2: ${jsonData["WhoisRecord"]["registryData"]["nameServers"]["hostNames"][1]}
-      `,
-      });
+      this.domains = [
+        ...this.domains,
+        {
+          title: this.domain,
+          message: jsonData["WhoisRecord"]["strippedText"]
+            ? jsonData["WhoisRecord"]["strippedText"]
+            : jsonData["WhoisRecord"]["registryData"]["strippedText"],
+          isActive: false,
+        },
+      ];
       this.domain = "";
     },
     errorNotify(message) {
@@ -71,6 +119,16 @@ export default {
         type: "is-danger",
         queue: false,
       });
+    },
+    deleteDomain(domainToDeleteTitle) {
+      this.domains = this.domains.filter(
+        (d) => d.title !== domainToDeleteTitle
+      );
+    },
+  },
+  watch: {
+    domains() {
+      localStorage.setItem("domains-list", JSON.stringify(this.domains));
     },
   },
 };
