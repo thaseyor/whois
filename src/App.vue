@@ -60,12 +60,7 @@
           </div></b-tab-item
         >
         <b-tab-item label="IP"
-          ><p class="content">
-            Ваш ip:
-            <basefont @click="copyIp" style="cursor:pointer">
-              {{ localip }}
-            </basefont>
-          </p>
+          >
           <b-field>
             <b-input
               @keydown.enter.native="loadIpInfo"
@@ -79,6 +74,12 @@
                 @click="loadIpInfo"
               /></p
           ></b-field>
+          <p class="content">
+            Your ip:
+            <basefont @click="copyIp" style="cursor:pointer">
+              {{ localip }}
+            </basefont>
+          </p>
           <div>
             <b-collapse
               v-for="item in ips"
@@ -117,7 +118,58 @@
             </b-collapse>
           </div></b-tab-item
         >
-        <b-tab-item label="Phone number"></b-tab-item>
+        <b-tab-item label="Phone number"
+          ><b-field>
+            <b-input
+              @keydown.enter.native="loadPhoneInfo"
+              v-model="phone"
+              expanded
+            ></b-input>
+            <p class="control">
+              <b-button
+                type="is-primary"
+                label="Search"
+                @click="loadPhoneInfo"
+              /></p
+          ></b-field>
+          <div>
+            <b-collapse
+              v-for="item in phones"
+              :key="item.title"
+              class="card"
+              animation="slide"
+              aria-id="contentIdForA11y3"
+              v-model="item.isActive"
+            >
+              <template #trigger="props">
+                <div
+                  class="card-header"
+                  role="button"
+                  aria-controls="contentIdForA11y3"
+                >
+                  <p class="card-header-title">
+                    {{ item.title }}
+                  </p>
+                  <a class="card-header-icon">
+                    <b-icon :icon="props.open ? 'menu-down' : 'menu-up'">
+                    </b-icon>
+                    <b-icon
+                      icon="delete"
+                      @click.stop.native="deletePhone(item.title)"
+                    >
+                    </b-icon>
+                  </a>
+                </div>
+              </template>
+
+              <div class="card-content">
+                <div class="content">
+                  <p v-for="m in item.message" :key="m">{{ m }}</p>
+                </div>
+              </div>
+            </b-collapse>
+          </div></b-tab-item
+        >
       </b-tabs>
     </section>
   </div>
@@ -130,11 +182,13 @@ export default {
     return {
       domain: "",
       ip: "",
+      phone: "",
       activeTab: 0,
       isLoading: false,
       domains: [],
       ips: [],
       localip: "",
+      phones: [],
     };
   },
   async created() {
@@ -142,12 +196,18 @@ export default {
     if (domains) {
       this.domains = JSON.parse(domains);
     }
+
     const ips = localStorage.getItem("ips-list");
     if (ips) {
       this.ips = JSON.parse(ips);
     }
-    const ipdata = await fetch(`https://ipinfo.io/json?token=2893d17b16a282`);
 
+    const phones = localStorage.getItem("phones-list");
+    if (phones) {
+      this.phones = JSON.parse(phones);
+    }
+
+    const ipdata = await fetch(`https://ipinfo.io/json?token=2893d17b16a282`);
     const localip = await ipdata.json();
     this.localip = localip["ip"];
   },
@@ -201,7 +261,6 @@ export default {
         `https://ipinfo.io/${this.ip}/json?token=2893d17b16a282`
       );
       const jsonData = await data.json();
-      console.log(jsonData);
       this.isLoading = false;
       this.ips = [
         ...this.ips,
@@ -221,13 +280,46 @@ export default {
       ];
       this.ip = "";
     },
+    async loadPhoneInfo() {
+      if (this.phones.filter((d) => d.title === this.phone).length) {
+        this.notify(`This phone has already been added!`, "is-danger");
+        return;
+      }
+      if (!this.phone) {
+        this.notify(`Empty string!`, "is-danger");
+        return;
+      }
+      this.isLoading = true;
+      const data = await fetch(
+        `https://htmlweb.ru/geo/api.php?telcod=${this.phone}&json`
+      );
+      const jsonData = await data.json();
+      console.log(jsonData);
+      this.isLoading = false;
+      this.phones = [
+        ...this.phones,
+        {
+          title: this.phone,
+          message: [
+            `Continent: ${jsonData["country"]['location']}`,
+            `Country: ${jsonData["country"]['english']} (${jsonData['country']['id']})`,
+            `Operator: ${jsonData[0]["oper"]} (${jsonData[0]["oper_brand"]})`,
+          ],
+          isActive: false,
+        },
+      ];
+      this.phone = "";
+    },
     deleteDomain(domainToDeleteTitle) {
       this.domains = this.domains.filter(
         (d) => d.title !== domainToDeleteTitle
       );
     },
     deleteIp(IpToDeleteTitle) {
-      this.ips = this.ips.filter((d) => d.title !== IpToDeleteTitle);
+      this.ips = this.ips.filter((i) => i.title !== IpToDeleteTitle);
+    },
+    deletePhone(PhoneToDeleteTitle) {
+      this.phones = this.phones.filter((i) => i.title !== PhoneToDeleteTitle);
     },
     copyIp() {
       this.notify("IP copied to clipboard", "is-success");
@@ -241,6 +333,9 @@ export default {
     },
     ips() {
       localStorage.setItem("ips-list", JSON.stringify(this.ips));
+    },
+    phones() {
+      localStorage.setItem("phones-list", JSON.stringify(this.phones));
     },
   },
 };
